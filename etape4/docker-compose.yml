@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  http:
+    build:
+      context: .
+      dockerfile: http/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - script
+    networks:
+      - wp-network
+
+  script:
+    build:
+      context: .
+      dockerfile: script/Dockerfile
+    depends_on:
+      - data
+    networks:
+      - wp-network
+
+  data:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: wppass
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - wp-network
+
+volumes:
+  db_data:
+
+networks:
+  wp-network:
