@@ -122,3 +122,37 @@ Step 6: Initiate MySQL database
 echo "Initializing MySQL database..."
 sleep 5
 docker exec -it data mysql -uroot -prootpassword -e "SHOW DATABASES;"
+
+etape3:
+
+Step 1: Create a new Docker network
+docker network create etape3network
+
+Step 2: Build a new PHP image with mysqli and pdo_mysql
+echo "Building PHP image with mysqli and pdo_mysql..."
+docker build -t php-fpm-mysql .
+
+Step 3: Launch MySQL data container
+docker run -d --name data \
+  --network etape3network \
+  -e MYSQL_ROOT_PASSWORD=rootpassword \
+  -e MYSQL_DATABASE=wordpress \
+  -e MYSQL_USER=wpuser \
+  -e MYSQL_PASSWORD=wppassword \
+  -p 3306:3306 \
+  mysql
+
+Step 4: Launch PHP-FPM container with the newly built image
+docker run -d --name script \
+  --network etape3network \
+  --network-alias script \
+  -v $(pwd)/app:/app \
+  php-fpm-mysql
+
+Step 5: Launch NGINX container
+docker run -d --name http \
+  --network etape3network \
+  -p 8080:80 \
+  -v $(pwd)/app:/app \
+  -v $(pwd)/nginx.conf:/etc/nginx/conf.d/default.conf \
+  nginx
